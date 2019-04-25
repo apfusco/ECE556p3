@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <vector>
 
+// Define structs for priority_queue implementation.
  /**
   * A structure to represent a 2D Point. 
   */
@@ -78,7 +79,7 @@
   int netDecomp(routingInst *rst)
   Reorders the pins within each net
 */
-int netDecomp(routingInst *rst);
+//int netDecomp(routingInst *rst);
 
 /*
 	Gets the total overflow of the routing instance
@@ -105,13 +106,13 @@ int readBenchmark(const char *fileName, routingInst *rst);
    input: pointer to the routing instance
    output: 1 if successful, 0 otherwise (e.g. the data structures are not populated) 
 */
-int solveRouting(routingInst *rst);
+//int solveRouting(routingInst *rst);//FIXME
 
-int solveRoutingRand(int *order, routingInst *rst);
+int solveRoutingRand(int *order, routingInst *rst, int netDcmp);
 
-int solveRoutingBasic(routingInst *rst);
+int solveRoutingBasic(routingInst *rst, int netDcmp, int ripUp);
 
-int routePinsBasic(point p1, point p2, int netNum, routingInst *rst);
+//int routePinsBasic(point p1, point p2, int netNum, routingInst *rst);//FIXME
   
 /* int writeOutput(const char *outRouteFile, routingInst *rst)
    Write the routing solution obtained from solveRouting(). 

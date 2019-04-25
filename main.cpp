@@ -49,27 +49,27 @@ int main(int argc, char **argv)
 	
 
 	////  NET DECOMPOSITION (if necessary)  ////////////////////////////////
-	if(d == 1){
+	/*if(d == 1){
 	  status = netDecomp(rst);
 	  if(status==0){
 	    printf("ERROR: decomposing nets\n");
 	    release(rst);
 	    return 1;
 	  }
-	}
+	}*/
 	////////////////////////////////////////////////////////////////////////
 
 	
 	
  	////  CREATE INITIAL ROUTING SOLUTION  /////////////////////////////////
- 	status = solveRoutingBasic(rst);
+ 	status = solveRoutingBasic(rst, d, n);
  	if(status==0){
  		printf("ERROR: running routing \n");
  		release(rst);
  		return 1;
  	}	
 	////////////////////////////////////////////////////////////////////////
-
+	//TODO: Create multithreading for solving routing.
 
 
 	////  RIPUP AND RE-ROUTE (if necessary)  ///////////////////////////////
@@ -90,48 +90,48 @@ int main(int argc, char **argv)
 	  
 	  // Main RRR Loop (terminates after run duration is reached)
 	  do {
-		  // Initialize this routing instance
-		  curr_rst = new routingInst;
-		  
-		  // read benchmark for curr_rst
-	      status = readBenchmark(inputFileName, curr_rst);
-   	      if(status==0){
- 	  	    printf("ERROR: reading input file for curr_rst \n");
-			release(curr_rst);
-			release(rst);
- 	        return 1;
- 	      }
-		  
-		  // Make order array
-		  int *order = makeOrderArray(rst);
-		  
-		  // Solve routing for curr_rst
-		  status = solveRoutingRand(order, curr_rst);
-		  free(order);
- 	      if(status==0){
- 		    printf("ERROR: running routing for curr_rst \n");
- 		    release(rst);
-			release(curr_rst);
- 		    return 1;
- 	      }
-		  
-		  // Check if curr_rst is the best solution we've seen so far
-		  currOverFlow = getOverflow(curr_rst);
-		  
-		  if(currOverFlow < lowestOverFlow) {
-			  // This is the best solution seen so far
-			  lowestOverFlow = currOverFlow;
-			  // Replace rst with curr_rst
-			  release(rst);
-			  rst = curr_rst;
-		  } else {
-			  // This solution is bad so destroy it
-			  release(curr_rst);
-		  }
-			
-	      // Find elapsed time since start
-	      now = clock() - start;
-	      time_taken = ((double)now)/CLOCKS_PER_SEC; // in seconds
+            // Initialize this routing instance
+            curr_rst = new routingInst;
+
+            // read benchmark for curr_rst
+	    status = readBenchmark(inputFileName, curr_rst);
+   	    if(status==0){
+ 	      printf("ERROR: reading input file for curr_rst \n");
+	      release(curr_rst);
+	      release(rst);
+	      return 1;
+	    }
+	    
+	    // Make order array
+	    int *order = makeOrderArray(rst);
+	    
+	    // Solve routing for curr_rst
+	    status = solveRoutingRand(order, curr_rst, d);
+	    free(order);
+	    if(status==0){
+	      printf("ERROR: running routing for curr_rst \n");
+	      release(rst);
+	      release(curr_rst);
+	      return 1;
+	    }
+	    
+	    // Check if curr_rst is the best solution we've seen so far.
+	    currOverFlow = getOverflow(curr_rst);
+	    if(currOverFlow < lowestOverFlow){
+              // This is the best solution seen so far
+	      lowestOverFlow = currOverFlow;
+	      // Replace rst with curr_rst
+	      release(rst);
+	      rst = curr_rst;
+	    }
+	    else {
+	      // This solution is bad so destroy it
+	      release(curr_rst);
+	    }
+	    
+	    // Find elapsed time since start
+	    now = clock() - start;
+	    time_taken = ((double)now)/CLOCKS_PER_SEC; // in seconds
 	    
 	  } while (time_taken < RUN_DURATION_IN_SEC);
 	}

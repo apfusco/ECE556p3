@@ -15,11 +15,12 @@
 
 using namespace std;
 
-// Define structs for priority_queue implementation.
+typedef unsigned long long ulonglong;
+
 typedef struct {
   point p1;
   point p2;
-  int weight;
+  ulonglong weight;
 } edge;
 
 typedef struct {
@@ -47,8 +48,18 @@ double getDistance(const point *p1, const point *p2){
   return sqrt(dy*dy + dx*dx);          // Pythagorean theorem to find distance between points
 }
 
+/*int netDecompDjikstra(routingInst *rst) {
+  // Assumes net_decomp_order has already been allocated.
+  for(int i = 0; i < rst->numNets; i++) {// Loops for each net.
+    // Reorder each net.
+    pair<int, point> start = {0, {rst->nets[0].x rst->nets[0].y}};
+    for(int j = 0; j < rst->nets[i].numPins; j++) {// Loops for each pin in given net.
+    }
+  }
+}*/
+
 // Reorders the pins within each net
-int netDecomp(routingInst *rst) {
+/*int netDecomp(routingInst *rst) {
   // For each net
   for (int n = 0; n < rst->numNets; n++) {
     
@@ -108,7 +119,7 @@ int netDecomp(routingInst *rst) {
   }
   
   return 1;
-}
+}*/
 
 
 
@@ -409,21 +420,20 @@ int routeSeg(point p1, point p2, int netNum, routingInst *rst) {
 }
 
 int routePinsBasic(point p1, point p2, int netNum, routingInst *rst){
-	// Check if this is a diagonal pair
-	if ( (p1.x != p2.x) && (p1.y != p2.y) ) {
+  // Check if this is a diagonal pair
+  if ( (p1.x != p2.x) && (p1.y != p2.y) ) {
     // It's a diagonal pair
-    
-		point corner;
-		corner.x = p2.x;
-		corner.y = p1.y;
-		routeSeg(p1, corner, netNum, rst);
-		routeSeg(corner, p2, netNum, rst);
+    point corner;
+    corner.x = p2.x;
+    corner.y = p1.y;
+    routeSeg(p1, corner, netNum, rst);
+    routeSeg(corner, p2, netNum, rst);
   } else {
     // They could be horizontal or vertical
     routeSeg(p1, p2, netNum, rst);
   }
 	
-	return 1;
+  return 1;
 }
 
 /*
@@ -435,20 +445,16 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
     panic("Same point for p1 and p2.");
   set<point, less_point> P_set;
   stack<edge> RP;// Used for retrace path.
-  //bool complete = false;// Will become true when path is made.
   const int width = rst->gx;
   const int height = rst->gy;
   const int capacity = rst->cap;
+  const int coeff = /*capacity / 4 + */1;// Will be multiplied by length to destination for heuristic.
   point new_point;
   edge new_edge;
-  int Q2_weight = 0;// Edge weight.
+  ulonglong Q2_weight = 0;// Edge weight.
   int edge_num;// Edge number.
   priority_queue<edge, vector<edge>, less_PQ> Q2;// Queue that will be hold points for Q2.
-  pair<int, point> start_point = {0, p1};;// Point that edges will be taken from for Q2.
-  //queue<pair<point, unordered_map<point, point>> RP;// Will keep track of paths added to Q3.//FIXME
-  //priority_queue<edge, vector<edge>, less_PQ> Q3;
-  
-  //start_point = {0, p1};// First point to add to Q3.
+  pair<int, point> start_point = {0, p1};// Point that edges will be taken from for Q2.
   
   while(true) {
     // Add all neighboring edges of p1 to Q2.
@@ -458,10 +464,10 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * capacity;// Heuristic for estimated weight to destination.
+        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
-        //P_set.insert(new_point);
+        //P_set.insert(new_point);//FIXME
       }
     }
     // Add top edge.
@@ -470,7 +476,7 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * capacity;// Heuristic for estimated weight to destination.
+        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
         //P_set.insert(new_point);
@@ -482,7 +488,7 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * capacity;// Heuristic for estimated weight to destination.
+        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
         //P_set.insert(new_point);
@@ -494,7 +500,7 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * capacity;// Heuristic for estimated weight to destination.
+        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
         //P_set.insert(new_point);
@@ -518,6 +524,7 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
     Q2.pop();
   }
 
+  //TODO: Figure out if point should be added after it's in Q2 or Q3. Could reduce runtime.
   if((RP.top().p1.x == p1.x) && (RP.top().p1.y == p1.y)) {
     routeSeg(RP.top().p1, RP.top().p2, netNum, rst);
     return 1;
@@ -585,49 +592,103 @@ int getOverflow(routingInst *rst){
   return total_overflow;
 }
 
-int solveRoutingBasic(routingInst *rst){
-  
-  // For each net
-  for (int n = 0; n < rst->numNets; n++) {
+// Will route pins by making a minimum spanning tree.
+void routeNetDcmp(routingInst *rst, int netNum, int ripUp) {
+  bool tree_done = false;
+  const uint num_points = rst->nets[netNum].numPins;
+  pair<int, point> start = {0, rst->nets[netNum].pins[0]};
+  priority_queue<edge, vector<edge>, less_PQ> PQ;
+  vector<edge> tree;
+  set<point, less_point> P_set;
 
-    // For all but the last pin in this net
-    for (int p = 0; p < ((rst->nets[n].numPins) - 1); p++) {
-      
-      // Route the pair (thisPin, nextPin)
-      routePinsBasic((rst->nets[n].pins[p]), (rst->nets[n].pins[p + 1]), n, rst);
+  P_set.insert(start.second);
+
+  while(!tree_done) {
+    // Add edges for every point to connect to start.
+    for(int p = 0; p < rst->nets[netNum].numPins; p++) {
+      const point new_p = rst->nets[netNum].pins[p];
+      if(P_set.find(new_p) == P_set.end()) {
+        ulonglong weight = abs(start.second.x - new_p.x) + abs(start.second.y - new_p.y) + start.first;
+        PQ.push({start.second, new_p, weight});
+      }
+    }
+    while(P_set.find(PQ.top().p2) != P_set.end())// Pop all points already in minimum spanning tree.
+      PQ.pop();
+    tree.push_back(PQ.top());
+    P_set.insert(PQ.top().p2);
+    start = {PQ.top().weight, PQ.top().p2};
+    PQ.pop();
+    if(P_set.size() == num_points) {
+      tree_done = true;
+      break;
+    }
+  }
+  for(uint e = 0; e < tree.size(); e++) {
+    if(ripUp)
+      routePins(tree[e].p1, tree[e].p2, netNum, rst);
+    else
+      routePinsBasic(tree[e].p1, tree[e].p2, netNum, rst);
+  }
+}
+
+int solveRoutingBasic(routingInst *rst, int netDcmp, int ripUp){
+ 
+  if(netDcmp) {
+    for(int n = 0; n < rst->numNets; n++) {
+      routeNetDcmp(rst, n, ripUp);
+    }
+  }
+  else {  
+    // For each net
+    for (int n = 0; n < rst->numNets; n++) {
+      // For all but the last pin in this net
+      for (int p = 0; p < ((rst->nets[n].numPins) - 1); p++) {
+        // Route the pair (thisPin, nextPin)
+        routePinsBasic((rst->nets[n].pins[p]), (rst->nets[n].pins[p + 1]), n, rst);
+      }
     }
   }
 
   return 1;
 }
 
-int solveRouting(routingInst *rst){
+/*
+int solveRouting(routingInst *rst, int netDcmp){//FIXME: Possibly remove this function?
   
-  // For each net
-  for (int n = 0; n < rst->numNets; n++) {
-
-    // For all but the last pin in this net
-    for (int p = 0; p < ((rst->nets[n].numPins) - 1); p++) {
-      
-      // Route the pair (thisPin, nextPin)
-      routePins((rst->nets[n].pins[p]), (rst->nets[n].pins[p + 1]), n, rst);
+  if(netDcmp) {
+    for(int n = 0; n < rst->numNets; n++) {
+      routeNetDcmp(rst, n);
     }
   }
-
+  else {
+    // For each net
+    for (int n = 0; n < rst->numNets; n++) {
+      // For all but the last pin in this net
+      for (int p = 0; p < ((rst->nets[n].numPins) - 1); p++) {
+        // Route the pair (thisPin, nextPin)
+        routePins((rst->nets[n].pins[p]), (rst->nets[n].pins[p + 1]), n, rst);
+      }
+    }
+  }
   return 1;
-}
+}*/
 
 // This uses a shuffled order
-int solveRoutingRand(int *order, routingInst *rst){
+int solveRoutingRand(int *order, routingInst *rst, int netDcmp){
   
-  // For each net
-  for (int n = 0; n < rst->numNets; n++) {
-
-    // For all but the last pin in this net
-    for (int p = 0; p < ((rst->nets[order[n]].numPins) - 1); p++) {
-      
-      // Route the pair (thisPin, nextPin)
-      routePins((rst->nets[order[n]].pins[p]), (rst->nets[order[n]].pins[p + 1]), order[n], rst);
+  if(netDcmp) {
+    for(int n = 0; n < rst->numNets; n++) {
+      routeNetDcmp(rst, n, 1);
+    }
+  }
+  else {
+    // For each net
+    for (int n = 0; n < rst->numNets; n++) {
+      // For all but the last pin in this net
+      for (int p = 0; p < ((rst->nets[order[n]].numPins) - 1); p++) { 
+        // Route the pair (thisPin, nextPin)
+        routePins((rst->nets[order[n]].pins[p]), (rst->nets[order[n]].pins[p + 1]), order[n], rst);
+      }
     }
   }
   return 1;
