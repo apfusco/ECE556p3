@@ -448,7 +448,7 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
   const int width = rst->gx;
   const int height = rst->gy;
   const int capacity = rst->cap;
-  const int coeff = /*capacity / 4 + */1;// Will be multiplied by length to destination for heuristic.
+  const int coeff = (capacity / 8) + 1;// Will be multiplied by length to destination for heuristic.
   point new_point;
   edge new_edge;
   ulonglong Q2_weight = 0;// Edge weight.
@@ -464,7 +464,12 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+        if(Q2.size() == 0)
+          Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+	else if(p2.x - start_point.second.x > 0)
+          Q2_weight -= coeff;
+	else if(p2.x - start_point.second.x < 0)
+          Q2_weight += coeff;
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
         //P_set.insert(new_point);//FIXME
@@ -476,7 +481,12 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+        if(Q2.size() == 0)
+          Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+	else if(p2.y - start_point.second.y > 0)
+          Q2_weight -= coeff;
+	else if(p2.y - start_point.second.y < 0)
+          Q2_weight += coeff;
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
         //P_set.insert(new_point);
@@ -488,7 +498,12 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+        if(Q2.size() == 0)
+          Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+	else if(p2.x - start_point.second.x > 0)
+          Q2_weight += coeff;
+	else if(p2.x - start_point.second.x < 0)
+          Q2_weight -= coeff;
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
         //P_set.insert(new_point);
@@ -500,7 +515,12 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+        if(Q2.size() == 0)
+          Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+	else if(p2.x - start_point.second.x > 0)
+          Q2_weight += coeff;
+	else if(p2.x - start_point.second.x < 0)
+          Q2_weight -= coeff;
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
         //P_set.insert(new_point);
@@ -608,7 +628,7 @@ void routeNetDcmp(routingInst *rst, int netNum, int ripUp) {
     for(int p = 0; p < rst->nets[netNum].numPins; p++) {
       const point new_p = rst->nets[netNum].pins[p];
       if(P_set.find(new_p) == P_set.end()) {
-        ulonglong weight = abs(start.second.x - new_p.x) + abs(start.second.y - new_p.y) + start.first;
+        ulonglong weight = abs(start.second.x - new_p.x) + abs(start.second.y - new_p.y);
         PQ.push({start.second, new_p, weight});
       }
     }
