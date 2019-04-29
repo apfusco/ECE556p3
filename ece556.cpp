@@ -448,13 +448,13 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
   const int width = rst->gx;
   const int height = rst->gy;
   const int capacity = rst->cap;
-  const int coeff = (capacity / 8) + 1;// Will be multiplied by length to destination for heuristic.
+  const int coeff = 1;// Will be multiplied by length to destination for heuristic.
   point new_point;
   edge new_edge;
   ulonglong Q2_weight = 0;// Edge weight.
   int edge_num;// Edge number.
   priority_queue<edge, vector<edge>, less_PQ> Q2;// Queue that will be hold points for Q2.
-  pair<int, point> start_point = {0, p1};// Point that edges will be taken from for Q2.
+  pair<int, point> start_point = {(abs(p2.x - p1.x) + abs(p2.y - p1.y)) * coeff, p1};// Point that edges will be taken from for Q2.
   
   while(true) {
     // Add all neighboring edges of p1 to Q2.
@@ -464,9 +464,9 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        if(Q2.size() == 0)
-          Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
-	else if(p2.x - start_point.second.x > 0)
+        //if(Q2.size() == 0)
+        //  Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+	if(p2.x - start_point.second.x > 0)
           Q2_weight -= coeff;
 	else if(p2.x - start_point.second.x < 0)
           Q2_weight += coeff;
@@ -481,9 +481,9 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        if(Q2.size() == 0)
-          Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
-	else if(p2.y - start_point.second.y > 0)
+        //if(Q2.size() == 0)
+        //  Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+	if(p2.y - start_point.second.y > 0)
           Q2_weight -= coeff;
 	else if(p2.y - start_point.second.y < 0)
           Q2_weight += coeff;
@@ -498,9 +498,9 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        if(Q2.size() == 0)
-          Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
-	else if(p2.x - start_point.second.x > 0)
+        //if(Q2.size() == 0)
+        //  Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+	if(p2.x - start_point.second.x > 0)
           Q2_weight += coeff;
 	else if(p2.x - start_point.second.x < 0)
           Q2_weight -= coeff;
@@ -515,9 +515,9 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        if(Q2.size() == 0)
-          Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
-	else if(p2.x - start_point.second.x > 0)
+        //if(Q2.size() == 0)
+        //  Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
+	if(p2.x - start_point.second.x > 0)
           Q2_weight += coeff;
 	else if(p2.x - start_point.second.x < 0)
           Q2_weight -= coeff;
