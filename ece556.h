@@ -38,7 +38,7 @@
   */
   typedef struct
   {
-    std::vector<segment> segments;   /* A vector (like an arraylist) of segments. A segment is ALWAYS flat. */
+    std::vector<segment>* segments;   /* A vector (like an arraylist) of segments. A segment is ALWAYS flat. */
 
   } route ;
  

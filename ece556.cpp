@@ -280,6 +280,7 @@ int readBenchmark(const char *fileName, routingInst *rst){
       ln_cpy = NULL;
     }
     rst->nets[i].pins = pins;
+    rst->nets[i].nroute.segments = new vector<segment>;
   }
 
   // Read blockages.
@@ -414,7 +415,7 @@ int routeSeg(point p1, point p2, int netNum, routingInst *rst) {
     }
   }  
   // Push the segment onto the vector
-  rst->nets[netNum].nroute.segments.push_back(seg);
+  rst->nets[netNum].nroute.segments->push_back(seg);
 
   return 1;
 }
@@ -448,7 +449,7 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
   const int width = rst->gx;
   const int height = rst->gy;
   const int capacity = rst->cap;
-  const int coeff = 1;// Will be multiplied by length to destination for heuristic.
+  const int coeff = capacity / 2;// Will be multiplied by length to destination for heuristic.
   point new_point;
   edge new_edge;
   ulonglong Q2_weight = 0;// Edge weight.
@@ -464,15 +465,12 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        //if(Q2.size() == 0)
-        //  Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
 	if(p2.x - start_point.second.x > 0)
           Q2_weight -= coeff;
 	else if(p2.x - start_point.second.x < 0)
           Q2_weight += coeff;
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
-        //P_set.insert(new_point);//FIXME
       }
     }
     // Add top edge.
@@ -481,15 +479,12 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        //if(Q2.size() == 0)
-        //  Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
 	if(p2.y - start_point.second.y > 0)
           Q2_weight -= coeff;
 	else if(p2.y - start_point.second.y < 0)
           Q2_weight += coeff;
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
-        //P_set.insert(new_point);
       }
     }
     // Add left edge.
@@ -498,15 +493,12 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        //if(Q2.size() == 0)
-        //  Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
 	if(p2.x - start_point.second.x > 0)
           Q2_weight += coeff;
 	else if(p2.x - start_point.second.x < 0)
           Q2_weight -= coeff;
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
-        //P_set.insert(new_point);
       }
     }
     // Add bottom edge.
@@ -515,27 +507,21 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
       if(P_set.find(new_point) == P_set.end()) {
         edge_num = findEdge(&start_point.second, &new_point, width, height);
         Q2_weight = start_point.first + capacity - rst->edgeCaps[edge_num] + rst->edgeUtils[edge_num];// Heuristic for weight.
-        //if(Q2.size() == 0)
-        //  Q2_weight += (abs(p2.x - new_point.x) + abs(p2.y - new_point.y)) * coeff;// Heuristic for estimated weight to destination.
-	if(p2.x - start_point.second.x > 0)
+	if(p2.y - start_point.second.y > 0)
           Q2_weight += coeff;
-	else if(p2.x - start_point.second.x < 0)
+	else if(p2.y - start_point.second.y < 0)
           Q2_weight -= coeff;
         new_edge = {start_point.second, new_point, Q2_weight};// pair to add.
         Q2.push(new_edge);
-        //P_set.insert(new_point);
       }
     }
     // Add point with new Q2 edges to Q3.
-    //Q3.push({Q2.top().p1, Q2.top().p2, Q2.top().weight});
     while(P_set.find(Q2.top().p2) != P_set.end())
       Q2.pop();
     RP.push(Q2.top());
     P_set.insert(Q2.top().p2);
-    //printf("Added edge to Q3.\n");//FIXME
     // If it is the last point, use retrace path to route all remaining points.
     if((Q2.top().p2.x == p2.x) && (Q2.top().p2.y == p2.y)) {
-      //printf("Found one point.\n");//FIXME
       break;
     }
     // Find lowest cost edge from Q2.
@@ -544,7 +530,6 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
     Q2.pop();
   }
 
-  //TODO: Figure out if point should be added after it's in Q2 or Q3. Could reduce runtime.
   if((RP.top().p1.x == p1.x) && (RP.top().p1.y == p1.y)) {
     routeSeg(RP.top().p1, RP.top().p2, netNum, rst);
     return 1;
@@ -562,7 +547,6 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
         panic("About to pop empty stack!");
       RP.pop();
     }
-    //printf("Found one edge to route.\n");//FIXME
     horizontal = (RP.top().p1.x == end_point.x);
     vertical = (RP.top().p1.y == end_point.y);
     if((!horizontal && !vertical) || ((RP.top().p1.x == p1.x) && (RP.top().p1.y == p1.y))) {
@@ -577,9 +561,7 @@ int routePins(point p1, point p2, int netNum, routingInst *rst) {
         done = true;
       }
       else {
-        //printf("About to call routeSeg.\n");//FIXME
         routeSeg(RP.top().p2, end_point, netNum, rst);
-        //printf("Called routeSeg.\n");//FIXME
         end_point = RP.top().p2;
       }
     }
@@ -672,27 +654,6 @@ int solveRoutingBasic(routingInst *rst, int netDcmp, int ripUp){
   return 1;
 }
 
-/*
-int solveRouting(routingInst *rst, int netDcmp){//FIXME: Possibly remove this function?
-  
-  if(netDcmp) {
-    for(int n = 0; n < rst->numNets; n++) {
-      routeNetDcmp(rst, n);
-    }
-  }
-  else {
-    // For each net
-    for (int n = 0; n < rst->numNets; n++) {
-      // For all but the last pin in this net
-      for (int p = 0; p < ((rst->nets[n].numPins) - 1); p++) {
-        // Route the pair (thisPin, nextPin)
-        routePins((rst->nets[n].pins[p]), (rst->nets[n].pins[p + 1]), n, rst);
-      }
-    }
-  }
-  return 1;
-}*/
-
 // This uses a shuffled order
 int solveRoutingRand(int *order, routingInst *rst, int netDcmp){
   
@@ -722,7 +683,7 @@ int writeOutput(const char *outRouteFile, routingInst *rst){
   const int numNets = rst->numNets;
   for(int n = 0; n < numNets; n++) {// Iterates for each net.
     fprintf(fp, "n%d\n", n);
-    for(const segment& seg : rst->nets[n].nroute.segments) {// Iterates for each segment or edge.
+    for(const segment& seg : *(rst->nets[n].nroute.segments)) {// Iterates for each segment or edge.
       fprintf(fp, "(%d,%d)-(%d,%d)\n", seg.p1.x, seg.p1.y, seg.p2.x, seg.p2.y);
     }
     fprintf(fp, "!\n");
@@ -782,41 +743,18 @@ int *makeOrderArray(routingInst *rst){
 
 	return order;
 }
-/*
-int unShuffleNets(routingInst *rst){
-	
-	net *Array = rst->nets;
-	net temp;
-	int i, j;
-	int Size = rst->numNets;
-	
-	for (i = 0; i < Size; i++)
-	{
-		for (j = i + 1; j < Size; j++)
-		{
-			if(Array[i].id > Array[j].id)
-			{
-				temp = Array[i];
-				Array[i] = Array[j];
-				Array[j] = temp;
-			}
-			
-		}
-	}
-	
-	return 1;
-}
-*/
+
 int release(routingInst *rst){
   /*********** TO BE FILLED BY YOU **********/
   const int numNets = rst->numNets;
   for(int n = 0; n < numNets; n++) {
     free(rst->nets[n].pins);
-    for(const segment& seg : rst->nets[n].nroute.segments) {
+    for(const segment& seg : *(rst->nets[n].nroute.segments)) {
       free(seg.edges);
     }
-    // TODO: Add rst->nets[n].nroute.segments.clear() here if necessary
+    delete rst->nets[n].nroute.segments;
   }
+  free(rst->nets);
   free(rst->edgeCaps);
   free(rst->edgeUtils);
   return 1;

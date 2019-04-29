@@ -8,7 +8,7 @@ int main(int argc, char **argv)
 {
 
     ////  PARAMETERS  //////////////////////////////////////////////////////
-    const int RUN_DURATION_IN_SEC = 600;
+    const double RUN_DURATION_IN_SEC = 600;
     ////////////////////////////////////////////////////////////////////////
 
 
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 	    // Find elapsed time since start
 	    now = clock() - start;
 	    time_taken = ((double)now)/CLOCKS_PER_SEC; // in seconds
-	    
+	    //printf("Added another iteration.\n");//FIXME
 	  } while (time_taken < RUN_DURATION_IN_SEC);
 	}
 	////////////////////////////////////////////////////////////////////////
